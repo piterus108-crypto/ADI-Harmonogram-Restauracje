@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ADI group - Panel Menagerow</title>
-    <link rel="stylesheet" href="styles.css?v=20260530-1740" />
+    <link rel="stylesheet" href="styles.css?v=20260530-1750" />
   </head>
   <body>
     <section class="auth-screen" id="authScreen">
@@ -93,6 +93,7 @@
           <label class="wide">Opis<textarea id="descriptionInput" rows="3"></textarea></label>
           <label class="wide">Uwagi<textarea id="notesInput" rows="2"></textarea></label>
           <label class="wide">Pliki i zdjecia<input id="attachmentsInput" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" /></label>
+          <div class="wide edit-attachments" id="existingAttachments"></div>
         </div>
         <footer class="dialog-actions"><button class="secondary-action" id="cancelDialog" type="button">Anuluj</button><button class="primary-action" type="submit">Zapisz</button></footer>
       </form>
@@ -116,6 +117,6 @@
       </form>
     </div>
 
-    <script src="app.js?v=20260530-1740"></script>
+    <script src="app.js?v=20260530-1750"></script>
   </body>
 </html>
