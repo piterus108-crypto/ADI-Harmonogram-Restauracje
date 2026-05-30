@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ADI group - Panel Menagerow</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-screen" id="authScreen">
+      <form class="auth-card" id="loginForm">
+        <div class="logo-mark"><strong>ADI</strong><span>group</span></div>
+        <p class="eyebrow">Dostep do systemu</p>
+        <h1>Wpisz swoj kod</h1>
+        <label>Kod dostepu<input id="accessCodeInput" type="password" placeholder="Wpisz kod" autocomplete="off" /></label>
+        <button class="primary-action" type="submit">Wejdz do panelu</button>
+        <p class="login-error" id="loginError" hidden>Nieprawidlowy kod dostepu.</p>
+      </form>
+    </section>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo-mark small"><strong>ADI</strong><span>group</span></div>
+          <div><strong>Azia Restauracje</strong><span>harmonogram dzialan</span></div>
+        </div>
+        <nav class="restaurant-nav" id="restaurantNav"></nav>
+        <button class="add-restaurant-button" id="openRestaurantModal" type="button">+ Dodaj restauracje / projekt</button>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1 class="topbar-title">Panel Menagerow</h1>
+            <p class="topbar-subtitle">zestawienia i planowanie</p>
+          </div>
+          <div class="topbar-actions">
+            <span class="access-badge" id="currentAccess"></span>
+            <button class="secondary-action" id="logoutButton" type="button">Wyloguj</button>
+            <button class="secondary-action" id="printReport" type="button">Drukuj raport</button>
+            <button class="secondary-action" id="exportCsv" type="button">Eksport CSV</button>
+            <button class="secondary-action" id="exportBackup" type="button">Backup JSON</button>
+            <button class="secondary-action" id="importBackupButton" type="button">Wczytaj backup</button>
+            <input id="importBackupInput" type="file" accept="application/json,.json" hidden />
+          </div>
+        </header>
+
+        <section class="summary-grid">
+          <article class="metric"><span>Wszystkie dzialania</span><strong id="metricTotal">0</strong></article>
+          <article class="metric"><span>W toku</span><strong id="metricInProgress">0</strong></article>
+          <article class="metric"><span>Po terminie</span><strong id="metricOverdue">0</strong></article>
+          <article class="metric"><span>Zakonczone</span><strong id="metricDone">0</strong></article>
+        </section>
+
+        <section class="entity-detail" id="entityDetail"></section>
+
+        <section class="control-bar">
+          <label>Status<select id="statusFilter"><option value="all">Wszystkie</option><option>Do zrobienia</option><option>W toku</option><option>Zablokowane</option><option>Zakonczone</option></select></label>
+          <label>Priorytet<select id="priorityFilter"><option value="all">Wszystkie</option><option>Wysoki</option><option>Sredni</option><option>Niski</option></select></label>
+          <label class="search-field">Szukaj<input id="searchInput" type="search" placeholder="Projekt, manager, kolejny krok" /></label>
+        </section>
+
+        <section class="restaurant-overview" id="restaurantOverview"></section>
+
+        <section class="table-section">
+          <div class="section-heading">
+            <div><h2 id="tableTitle">Wszystkie dzialania</h2><p id="tableSubtitle">Pelna lista projektow ze wszystkich lokalizacji.</p></div>
+            <button class="primary-action" id="openActionModal" type="button">Dodaj dzialanie</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Restauracja</th><th>Projekt</th><th>Manager</th><th>Priorytet</th><th>Termin</th><th>Status</th><th>Nastepny krok</th><th></th></tr></thead>
+              <tbody id="actionsTable"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="emptyState" hidden>Brak dzialan dla wybranych filtrow.</p>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="actionDialog">
+      <form id="actionForm" method="dialog">
+        <header><h2 id="dialogTitle">Dodaj dzialanie</h2><button id="closeDialog" type="button">×</button></header>
+        <input id="actionId" type="hidden" />
+        <div class="form-grid">
+          <label>Restauracja / projekt<select id="restaurantInput" required></select></label>
+          <label>Obszar<input id="areaInput" required /></label>
+          <label>Projekt / dzialanie<input id="titleInput" required /></label>
+          <label>Manager<input id="managerInput" required /></label>
+          <label>Termin<input id="dueDateInput" type="date" required /></label>
+          <label>Priorytet<select id="priorityInput"><option>Wysoki</option><option>Sredni</option><option>Niski</option></select></label>
+          <label>Status<select id="statusInput"><option>Do zrobienia</option><option>W toku</option><option>Zablokowane</option><option>Zakonczone</option></select></label>
+          <label>Nastepny krok<input id="nextStepInput" required /></label>
+          <label class="wide">Opis<textarea id="descriptionInput" rows="3"></textarea></label>
+          <label class="wide">Uwagi<textarea id="notesInput" rows="2"></textarea></label>
+        </div>
+        <footer class="dialog-actions"><button class="secondary-action" id="cancelDialog" type="button">Anuluj</button><button class="primary-action" type="submit">Zapisz</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="restaurantDialog">
+      <form id="restaurantForm" method="dialog">
+        <header><h2>Dodaj restauracje / projekt</h2><button id="closeRestaurantDialog" type="button">×</button></header>
+        <div class="form-grid">
+          <label>Nazwa<input id="newRestaurantName" required /></label>
+          <label>Typ<select id="newRestaurantType"><option>Restauracja</option><option>Projekt</option></select></label>
+          <label>Manager<input id="newRestaurantManager" required /></label>
+          <label>Telefon<input id="newRestaurantPhone" /></label>
+          <label>E-mail<input id="newRestaurantEmail" type="email" /></label>
+          <label>Adres / lokalizacja<input id="newRestaurantAddress" /></label>
+          <label>Kolor<input id="newRestaurantColor" type="color" value="#a22620" /></label>
+          <label>Status projektu %<input id="newProjectProgress" type="number" min="0" max="100" step="1" /></label>
+          <label class="wide">Opis<textarea id="newRestaurantDescription" rows="2"></textarea></label>
+        </div>
+        <footer class="dialog-actions"><button class="secondary-action" id="cancelRestaurantDialog" type="button">Anuluj</button><button class="primary-action" type="submit">Zapisz</button></footer>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
