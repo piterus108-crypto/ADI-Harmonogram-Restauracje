@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ADI group - Panel Menagerow</title>
-    <link rel="stylesheet" href="styles.css?v=20260530-1655" />
+    <link rel="stylesheet" href="styles.css?v=20260530-1710" />
   </head>
   <body>
     <section class="auth-screen" id="authScreen">
@@ -78,8 +78,8 @@
       </main>
     </div>
 
-    <dialog id="actionDialog">
-      <form id="actionForm" method="dialog">
+    <div class="modal" id="actionDialog" hidden>
+      <form id="actionForm">
         <header><h2 id="dialogTitle">Dodaj dzialanie</h2><button id="closeDialog" type="button">×</button></header>
         <input id="actionId" type="hidden" />
         <div class="form-grid">
@@ -96,10 +96,10 @@
         </div>
         <footer class="dialog-actions"><button class="secondary-action" id="cancelDialog" type="button">Anuluj</button><button class="primary-action" type="submit">Zapisz</button></footer>
       </form>
-    </dialog>
+    </div>
 
-    <dialog id="restaurantDialog">
-      <form id="restaurantForm" method="dialog">
+    <div class="modal" id="restaurantDialog" hidden>
+      <form id="restaurantForm">
         <header><h2>Dodaj restauracje / projekt</h2><button id="closeRestaurantDialog" type="button">×</button></header>
         <div class="form-grid">
           <label>Nazwa<input id="newRestaurantName" required /></label>
@@ -114,8 +114,8 @@
         </div>
         <footer class="dialog-actions"><button class="secondary-action" id="cancelRestaurantDialog" type="button">Anuluj</button><button class="primary-action" type="submit">Zapisz</button></footer>
       </form>
-    </dialog>
+    </div>
 
-    <script src="app.js?v=20260530-1655"></script>
+    <script src="app.js?v=20260530-1710"></script>
   </body>
 </html>
