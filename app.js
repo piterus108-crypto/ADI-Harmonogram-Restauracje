@@ -1,5 +1,6 @@
 const months = [["jan","Styczen"],["feb","Luty"],["mar","Marzec"],["apr","Kwiecien"],["may","Maj"],["jun","Czerwiec"],["jul","Lipiec"],["aug","Sierpien"],["sep","Wrzesien"],["oct","Pazdziernik"],["nov","Listopad"],["dec","Grudzien"]];
 const storageKey = "azia-harmonogram-v3";
+const backupKey = `${storageKey}-snapshots`;
 const sessionKey = "adi-current-user";
 const adminCode = "adi01";
 const $ = (selector) => document.querySelector(selector);
@@ -70,7 +71,7 @@ els.actionsTable.addEventListener("click", e => { const b = e.target.closest("bu
 renderAuth();
 
 function monthObject(values = {}) { return Object.fromEntries(months.map(([k]) => [k, Number(values[k] || 0)])); }
-function loadState() { try { const saved = JSON.parse(localStorage.getItem(storageKey)); if (saved?.restaurants) return {selectedRestaurant:"all", statusFilter:"all", priorityFilter:"all", search:"", restaurants: normalize({...clone(seedData.restaurants), ...saved.restaurants}), actions: normalizeActions(Array.isArray(saved.actions) ? saved.actions : clone(seedData.actions))}; } catch {} return {selectedRestaurant:"all", statusFilter:"all", priorityFilter:"all", search:"", restaurants: normalize(clone(seedData.restaurants)), actions: normalizeActions(clone(seedData.actions))}; }
+function loadState() { try { const saved = bestSavedState(); if (saved?.restaurants) return {selectedRestaurant:"all", statusFilter:"all", priorityFilter:"all", search:"", restaurants: normalize({...clone(seedData.restaurants), ...saved.restaurants}), actions: normalizeActions(mergeActions(clone(seedData.actions), saved.actions || []))}; } catch {} return {selectedRestaurant:"all", statusFilter:"all", priorityFilter:"all", search:"", restaurants: normalize(clone(seedData.restaurants)), actions: normalizeActions(clone(seedData.actions))}; }
 function normalize(items) { const out = {}; Object.entries(items).forEach(([k,r]) => out[k] = {...r, sales: monthObject(r.sales), externalSales: monthObject(r.externalSales), employeeCosts: monthObject(r.employeeCosts), b2bCosts: monthObject(r.b2bCosts), progress: clamp(r.progress || 0)}); return out; }
 function loadUser() { try { return JSON.parse(sessionStorage.getItem(sessionKey)); } catch { return null; } }
 function data() { return state.restaurants; }
@@ -79,7 +80,7 @@ function renderAuth() { document.body.classList.toggle("authenticated", !!state.
 function isAdmin() { return state.currentUser?.role === "admin"; }
 function canAccess(k) { return isAdmin() ? k === "all" || !!data()[k] : state.currentUser?.restaurant === k; }
 function visibleKeys() { return isAdmin() ? Object.keys(data()) : [state.currentUser.restaurant]; }
-function persist() { localStorage.setItem(storageKey, JSON.stringify({restaurants:state.restaurants, actions:state.actions, savedAt:new Date().toISOString()})); }
+function persist() { const previous = readStored(storageKey); const payload = JSON.stringify({restaurants:state.restaurants, actions:state.actions, savedAt:new Date().toISOString()}); saveSnapshot(previous); try { localStorage.setItem(storageKey, payload); } catch { localStorage.removeItem(backupKey); try { localStorage.setItem(storageKey, payload); } catch { alert("Nie udalo sie zapisac danych. Zrob backup JSON i zmniejsz liczbe lub rozmiar zalacznikow."); } } }
 function render() { if (state.currentUser?.role === "manager") state.selectedRestaurant = state.currentUser.restaurant; const actions = filteredActions(); renderAccess(); renderNav(); renderOptions(); renderMetrics(actions); renderEntity(); renderOverview(); renderTable(actions); renderTitles(); }
 function renderAccess() { els.currentAccess.textContent = isAdmin() ? "Dostep: administrator" : `Dostep: ${data()[state.currentUser.restaurant]?.name}`; ["#exportCsv","#exportBackup","#importBackupButton","#openRestaurantModal"].forEach(s => $(s).hidden = !isAdmin()); $("#openActionModal").hidden = !state.currentUser; }
 function renderNav() { const item = type => visibleKeys().filter(k => data()[k].type === type).map(k => `<button class="nav-item ${state.selectedRestaurant===k?"active":""}" data-restaurant="${k}"><strong>${esc(data()[k].name)}</strong><span>${esc(data()[k].description || "")}</span></button>`).join(""); els.restaurantNav.innerHTML = `${isAdmin()?`<button class="nav-item ${state.selectedRestaurant==="all"?"active":""}" data-restaurant="all"><strong>Wszystkie restauracje</strong><span>Lista restauracji i projektow</span></button>`:""}<span class="nav-group-label">Restauracje</span>${item("Restauracja")}<span class="nav-group-label projects">Projekty</span>${item("Projekt") || `<span class="nav-empty">Brak projektow</span>`}`; }
@@ -106,7 +107,7 @@ function updateSales(k,type,m,v){ if(canAccess(k)){ if (!data()[k][type]) data()
 function updateAction(id,patch){ const a=state.actions.find(x=>x.id===id); if(a&&canAccess(a.restaurant)&&isAdmin()){ Object.assign(a,patch,{updatedAt:new Date().toISOString().slice(0,10)}); persist(); render(); } }
 function exportCsv(){ download("adi-harmonogram.csv", filteredActions().map(a=>[data()[a.restaurant].name,a.title,a.manager,a.status].join(";")).join("\n"), "text/csv"); }
 function exportBackup(){ download(`adi-backup-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify({restaurants:data(),actions:state.actions},null,2), "application/json"); }
-async function importBackup(e){ const f=e.target.files[0]; if(!f)return; const b=JSON.parse(await f.text()); state.restaurants=normalize(b.restaurants); state.actions=normalizeActions(b.actions||[]); persist(); render(); }
+async function importBackup(e){ const f=e.target.files[0]; if(!f)return; const b=JSON.parse(await f.text()); state.restaurants=normalize({...state.restaurants, ...(b.restaurants || {})}); state.actions=normalizeActions(mergeActions(state.actions, b.actions || [])); persist(); render(); }
 function download(n,c,t){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); URL.revokeObjectURL(a.href); }
 function openModal(el){ el.hidden = false; document.body.classList.add("modal-open"); }
 function closeModal(el){ el.hidden = true; document.body.classList.remove("modal-open"); }
@@ -131,6 +132,10 @@ function slug(v){ return v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036
 function clamp(v){ return Math.max(0,Math.min(100,Math.round(Number(v)||0))); }
 function esc(v){ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c])); }
 function clone(value){ return JSON.parse(JSON.stringify(value)); }
+function readStored(key){ try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function bestSavedState(){ const saved = readStored(storageKey); const snapshots = Array.isArray(readStored(backupKey)) ? readStored(backupKey).map(s => s.data) : []; return [saved, ...snapshots].filter(s => s?.restaurants).sort((a,b) => (b.actions?.length || 0) - (a.actions?.length || 0))[0]; }
+function saveSnapshot(saved){ if (!saved?.restaurants) return; try { const snapshots = Array.isArray(readStored(backupKey)) ? readStored(backupKey) : []; snapshots.unshift({savedAt:new Date().toISOString(), data:saved}); localStorage.setItem(backupKey, JSON.stringify(snapshots.slice(0,12))); } catch {} }
+function mergeActions(...lists){ const map = new Map(); lists.flat().filter(a => a?.id).forEach(a => map.set(a.id, a)); return [...map.values()]; }
 function normalizeActions(actions){ return actions.map(a => ({...a, attachments:Array.isArray(a.attachments)?a.attachments:[], priority: normalizePriority(a.priority), status: normalizeStatus(a.status)})); }
 function normalizePriority(v){ return {"Średni":"Sredni","średni":"Sredni","Sredni":"Sredni","Wysoki":"Wysoki","Niski":"Niski"}[v] || "Sredni"; }
 function normalizeStatus(v){ return {"Zakończone":"Zakonczone","Zakonczone":"Zakonczone","Do zrobienia":"Do zrobienia","W toku":"W toku","Zablokowane":"Zablokowane"}[v] || "Do zrobienia"; }
