@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ADI group - Panel Menagerow</title>
-    <link rel="stylesheet" href="styles.css?v=20260530-1750" />
+    <link rel="stylesheet" href="styles.css?v=20260608-1010" />
   </head>
   <body>
     <section class="auth-screen" id="authScreen">
@@ -89,6 +89,7 @@
           <label>Termin<input id="dueDateInput" type="date" required /></label>
           <label>Priorytet<select id="priorityInput"><option>Wysoki</option><option>Sredni</option><option>Niski</option></select></label>
           <label>Status<select id="statusInput"><option>Do zrobienia</option><option>W toku</option><option>Zablokowane</option><option>Zakonczone</option></select></label>
+          <label class="wide checkbox-row" id="broadcastLabel"><input id="broadcastAllInput" type="checkbox" /> Dodaj to samo dzialanie do wszystkich restauracji</label>
           <label>Nastepny krok<input id="nextStepInput" required /></label>
           <label class="wide">Opis<textarea id="descriptionInput" rows="3"></textarea></label>
           <label class="wide">Uwagi<textarea id="notesInput" rows="2"></textarea></label>
@@ -117,6 +118,6 @@
       </form>
     </div>
 
-    <script src="app.js?v=20260530-1750"></script>
+    <script src="app.js?v=20260608-1010"></script>
   </body>
 </html>
